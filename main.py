@@ -7,4 +7,4 @@ async def upload_audio(file_bytes: bytes = Body(...)):
     # Process received bytes
     file_size = len(file_bytes)
 
-    return {"message": "File received!", "size_in_bytes": file_size}
+    return {"message": "File received, ok!", "size_in_bytes": file_size}
