@@ -1,10 +1,34 @@
+import os
 from fastapi import FastAPI, Body
+from groq import Groq  # Make sure you have `groq` installed: pip install groq
 
 app = FastAPI()
 
-@app.post("/upload-audio/")
-async def upload_audio(file_bytes: bytes = Body(...)):
-    # Process received bytes
-    file_size = len(file_bytes)
+# Load API Key from Environment Variable
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY is missing! Set it as an environment variable.")
 
-    return {"message": "File received, ok!", "size_in_bytes": file_size}
+# Initialize Groq Client
+client = Groq(api_key=GROQ_API_KEY)
+
+def get_transcription(client, audio_bytes):
+    """
+    Transcribes an audio file using Groq Whisper API.
+    - `audio_bytes`: Raw audio data in bytes.
+    """
+    transcription = client.audio.transcriptions.create(
+        file=("recording.wav", audio_bytes),
+        model="whisper-large-v3",
+        response_format="verbose_json",
+    )
+    return transcription.text
+
+@app.post("/transcribe-audio/")
+async def transcribe_audio(file_bytes: bytes = Body(...)):
+    """
+    Receives raw audio bytes, sends them to Groq for transcription, 
+    and returns the transcribed text.
+    """
+    transcript_text = get_transcription(client, file_bytes)
+    return {"transcription": transcript_text}
